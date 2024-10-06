@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -87,22 +88,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 权限请求结果的回调方法
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                testConnection();
-                Log.d(TAG, "看看网络通没通");
-                // 如果用户同意了权限请求，启动文件选择器
-                selectFile();
-                Log.d(TAG, "进入选择文件过程");
-            } else {
-                Log.e(TAG, "读取存储权限被拒绝，无法选择文件。");
-            }
-        }
-    }
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//
+//        if (requestCode == PERMISSION_REQUEST_CODE) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                testConnection();
+//                Log.d(TAG, "看看网络通没通");
+//                // 如果用户同意了权限请求，启动文件选择器
+//                selectFile();
+//                Log.d(TAG, "进入选择文件过程");
+//            } else {
+//                Log.e(TAG, "读取存储权限被拒绝，无法选择文件。");
+//            }
+//        }
+//    }
 
     private void checkStoragePermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -175,103 +176,16 @@ public class MainActivity extends AppCompatActivity {
                     .build();
 
             // 发起请求
-            OkHttpClient client = new OkHttpClient();
+            OkHttpClient client = new OkHttpClient().newBuilder()
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .build();
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
                     Log.e(TAG, "上传失败: " + e.getMessage());
-                }
-
-//                @Override
-//                public void onResponse(Call call, Response response) throws IOException {
-//                    if (response.isSuccessful()) {
-//                        String responseData = response.body().string();
-//                        Log.d(TAG, "服务端返回: " + responseData);
-//                    } else {
-//                        Log.e(TAG, "服务器错误: " + response.message());
-//                    }
-//                }
-
-//                @Override
-//                public void onResponse(Call call, Response response) throws IOException {
-//                    if (response.isSuccessful()) {
-//                        // 将MP4文件保存到本地存储
-//                        InputStream inputStream = response.body().byteStream();
-//                        File videoFile = new File(getExternalFilesDir(null), "downloaded_video.mp4");
-//
-//                        FileOutputStream fileOutputStream = new FileOutputStream(videoFile);
-//                        byte[] buffer = new byte[2048];
-//                        int bytesRead;
-//                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                            fileOutputStream.write(buffer, 0, bytesRead);
-//                        }
-//
-//                        fileOutputStream.close();
-//                        inputStream.close();
-//
-//                        // 文件保存成功，打印保存的路径
-//                        Log.d(TAG, "保存的视频文件路径: " + videoFile.getAbsolutePath());
-//
-//                        // 文件保存成功，提示用户
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                new AlertDialog.Builder(MainActivity.this)
-//                                        .setTitle("视频下载完成")
-//                                        .setMessage("点击确认播放视频")
-//                                        .setPositiveButton("播放", new DialogInterface.OnClickListener() {
-//                                            @Override
-//                                            public void onClick(DialogInterface dialog, int which) {
-//                                                // 播放下载的视频
-//                                                playVideo(videoFile);
-//                                            }
-//                                        })
-//                                        .setNegativeButton("取消", null)
-//                                        .show();
-//                            }
-//                        });
-//                    } else {
-//                        Log.e(TAG, "服务器错误: " + response.message());
-//                    }
-//                }
-
-
-//                @Override
-//                public void onResponse(Call call, Response response) throws IOException {
-//                    if (response.isSuccessful()) {
-//                        // 从响应中获取文件输入流
-//                        InputStream inputStream = response.body().byteStream();
-//
-//                        // 将文件保存到公共存储的Downloads目录
-//                        File downloadsDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-//                        File videoFile = new File(downloadsDirectory, "downloaded_video.mp4");
-//
-//                        FileOutputStream fileOutputStream = new FileOutputStream(videoFile);
-//                        byte[] buffer = new byte[2048];
-//                        int bytesRead;
-//                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                            fileOutputStream.write(buffer, 0, bytesRead);
-//                        }
-//
-//                        fileOutputStream.close();
-//                        inputStream.close();
-//
-//                        Log.d(TAG, "视频已保存到Downloads目录: " + videoFile.getAbsolutePath());
-//
-//                        // 提示用户视频已下载
-//                        runOnUiThread(() -> {
-//                            new AlertDialog.Builder(MainActivity.this)
-//                                    .setTitle("视频下载完成")
-//                                    .setMessage("点击确认播放视频")
-//                                    .setPositiveButton("播放", (dialog, which) -> playVideo(videoFile))
-//                                    .setNegativeButton("取消", null)
-//                                    .show();
-//                        });
-//                    } else {
-//                        Log.e(TAG, "服务器错误: " + response.message());
-//                    }
-//                }
-
+                }//第一段代码可以，第二段不行会报上传失败: timeout
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
@@ -335,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
                         // 提示用户视频已下载
                         runOnUiThread(() -> {
                             // 使用 Toast 提示
-                            Toast.makeText(MainActivity.this, "视频下载完成", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Video Successfully downloaded. Please check it in the file manager.", Toast.LENGTH_SHORT).show();
                         });
                     } else {
                         Log.e(TAG, "服务器错误: " + response.message());
@@ -350,13 +264,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    private void playVideo(File videoFile) {
-//        Intent intent = new Intent(Intent.ACTION_VIEW);
-//        Uri videoUri = Uri.fromFile(videoFile);
-//        intent.setDataAndType(videoUri, "video/mp4");
-//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        startActivity(intent);
-//    }
 
 //    private void playVideo(File videoFile) {
 //        Intent intent = new Intent(Intent.ACTION_VIEW);
